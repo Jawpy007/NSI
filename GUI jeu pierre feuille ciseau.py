@@ -1,6 +1,5 @@
 import socket
 from tkinter import *
-
 #Variable Globals
 s = None
 message = ""
