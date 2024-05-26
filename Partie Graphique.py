@@ -1,60 +1,68 @@
-from tkinter import *
-#Server receveur / envoie
 import socket
+from tkinter import *
 
+message = ""
+msg = None
+Connected = False
 
 def connection():
-    receveur=socket.socket(type=socket.SOCK_DGRAM)
-    Message = b'Connect'
-    receveur.sendto(Message,('192.168.1.45',56789))
-    while True:
-        server = socket.socket(type=socket.SOCK_DGRAM)
-        server.bind(('localhost',56789))
-        donnee,adress = server.recvfrom(1500)
-#Def fonction pierre / feuille / ciseau
+    global msg, Connected
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((socket.gethostname(), 56789))
+        msg = s.recv(1024)
+        if msg:
+            print(msg.decode("utf-8"))
+            message = msg.decode("utf-8")
+            # texte
+            ecriture = message # Change to include the player's response via the server
+            # narrateur
+            Narrateur = Label(fen, text=ecriture)
+            Narrateur.grid(row=1, column=3)
+            s.send(bytes("Hey I'm here", "utf-8"))
+            bouton_connexion["state"] = "disabled"
+            bouton_pierre["state"] = "normal"
+            bouton_feuille["state"] = "normal"
+            bouton_ciseau["state"] = "normal"
+            Connected = True
+        else:
+            raise Exception("No message received from server")
+    finally:
+        s.close()
+
 def Pierre():
-    receveur=socket.socket(type=socket.SOCK_DGRAM)
+    receveur = socket.socket(type=socket.SOCK_DGRAM)
     Message = b'Pierre'
-    receveur.sendto(Message,('192.168.1.45 ',56789))
-   
+    receveur.sendto(Message, ('192.168.1.45', 56789))
 
 def Feuille():
-    receveur=socket.socket(type=socket.SOCK_DGRAM)
+    receveur = socket.socket(type=socket.SOCK_DGRAM)
     Message = b'Feuille'
-    receveur.sendto(Message,('192.168.1.45 ',56789))
-
+    receveur.sendto(Message, ('192.168.1.45', 56789))
 
 def Ciseau():
-    receveur=socket.socket(type=socket.SOCK_DGRAM)
-    Message = b'ciseau'
-    receveur.sendto(Message,('192.168.1.45 ',56789))
+    receveur = socket.socket(type=socket.SOCK_DGRAM)
+    Message = b'Ciseau'
+    receveur.sendto(Message, ('192.168.1.45', 56789))
 
-#GUI
-fen=Tk()
+# GUI
+fen = Tk()
 fen.title("jeu")
 
-#bouton feuille
-bouton_feuille=Button(fen,text='feuille', command=Feuille)
-bouton_feuille.grid(row = 3, column =2)
-
-#bouton pierre
-bouton_pierre=Button(fen,text='pierre',command=Pierre)
-bouton_pierre.grid(row=3, column=3)
-
-#bouton ciseau
-bouton_ciseau=Button(fen,text='ciseau', command=Ciseau)
-bouton_ciseau.grid(row=3, column=4)
-
-#texte
-ecriture='au tour de' #changer pour mettre la réponse du joueur via le serveur
-
-#bouton start
-bouton_connexion=Button(fen, text='Start', command=connection)
+# bouton start
+bouton_connexion = Button(fen, text='Start', command=connection)
 bouton_connexion.grid(row=0, column=100)
 
-#narrateur
-Narrateur=Label(fen, text=ecriture)
-Narrateur.grid(row=1, column=3)
+# bouton feuille
+bouton_feuille = Button(fen, text='Feuille', command=Feuille, state='disabled')
+bouton_feuille.grid(row=3, column=2)
 
+# bouton pierre
+bouton_pierre = Button(fen, text='Pierre', command=Pierre, state='disabled')
+bouton_pierre.grid(row=3, column=3)
+
+# bouton ciseau
+bouton_ciseau = Button(fen, text='Ciseau', command=Ciseau, state='disabled')
+bouton_ciseau.grid(row=3, column=4)
 
 fen.mainloop()
