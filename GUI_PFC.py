@@ -1,5 +1,6 @@
 import socket
 from tkinter import *
+
 #Variable Globals
 s = None
 message = ""
@@ -10,13 +11,13 @@ def connection():
     global msg, Connected, s
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect((socket.gethostname(), 56789))
+        s.connect(("127.0.0.1", 56789))
         msg = s.recv(1024)
         if msg:
             print(msg.decode("utf-8"))
             message = msg.decode("utf-8")
             # texte
-            ecriture = message 
+            ecriture = message
             # narrateur
             Narrateur = Label(fen, text=ecriture)
             Narrateur.grid(row=1, column=3)
@@ -35,25 +36,28 @@ def Result():
     msg = s.recv(1024)
     Resultat = msg.decode("utf-8")
         # texte
-    ecriture = Resultat 
-    
+    ecriture = Resultat
+
         # narrateur
     Narrateur = Label(fen, text=ecriture)
-    Narrateur.grid(row=1, column=3)
-    
+    Narrateur.grid(row=0, column=3)
+
 def Pierre():
     if Connected:
         s.send(bytes("Pierre", "utf-8"))
+        Result()
 
 
 def Feuille():
     if Connected:
         s.send(bytes("Feuille", "utf-8"))
-        
+        Result()
+
 
 def Ciseau():
     if Connected:
         s.send(bytes("Ciseau", "utf-8"))
+        Result()
 
 # GUI
 fen = Tk()
@@ -76,4 +80,3 @@ bouton_ciseau = Button(fen, text='Ciseau', command=Ciseau, state='disabled')
 bouton_ciseau.grid(row=3, column=4)
 
 fen.mainloop()
-
