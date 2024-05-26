@@ -15,7 +15,7 @@ def connection():
             print(msg.decode("utf-8"))
             message = msg.decode("utf-8")
             # texte
-            ecriture = message # Change to include the player's response via the server
+            ecriture = message 
             # narrateur
             Narrateur = Label(fen, text=ecriture)
             Narrateur.grid(row=1, column=3)
