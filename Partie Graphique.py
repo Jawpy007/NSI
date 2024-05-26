@@ -1,12 +1,14 @@
 import socket
 from tkinter import *
 
+#Variable Globals
+s = None
 message = ""
 msg = None
 Connected = False
 
 def connection():
-    global msg, Connected
+    global msg, Connected, s
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((socket.gethostname(), 56789))
@@ -27,23 +29,32 @@ def connection():
             Connected = True
         else:
             raise Exception("No message received from server")
-    finally:
-        s.close()
+    except Exception as e:
+        print(f"Connection failed: {e}")
 
+def Result():
+    msg = s.recv(1024)
+    Resultat = msg.decode("utf-8")
+        # texte
+    ecriture = Resultat 
+    
+        # narrateur
+    Narrateur = Label(fen, text=ecriture)
+    Narrateur.grid(row=1, column=3)
+    
 def Pierre():
-    receveur = socket.socket(type=socket.SOCK_DGRAM)
-    Message = b'Pierre'
-    receveur.sendto(Message, ('192.168.1.45', 56789))
+    if Connected:
+        s.send(bytes("Pierre", "utf-8"))
+
 
 def Feuille():
-    receveur = socket.socket(type=socket.SOCK_DGRAM)
-    Message = b'Feuille'
-    receveur.sendto(Message, ('192.168.1.45', 56789))
+    if Connected:
+        s.send(bytes("Feuille", "utf-8"))
+        
 
 def Ciseau():
-    receveur = socket.socket(type=socket.SOCK_DGRAM)
-    Message = b'Ciseau'
-    receveur.sendto(Message, ('192.168.1.45', 56789))
+    if Connected:
+        s.send(bytes("Ciseau", "utf-8"))
 
 # GUI
 fen = Tk()
@@ -66,3 +77,4 @@ bouton_ciseau = Button(fen, text='Ciseau', command=Ciseau, state='disabled')
 bouton_ciseau.grid(row=3, column=4)
 
 fen.mainloop()
+
