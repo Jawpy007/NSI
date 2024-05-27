@@ -1,4 +1,5 @@
 import socket
+#import librairie
 from tkinter import *
 
 #Variable Globals
