@@ -1,59 +1,61 @@
-#Script Server
-
-import socket,os
-Tick = 0
-Players = {}
-hostname="127.0.0.1"
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(("127.0.0.1", 56789))
-s.listen(5)
+import socket
 
 def Transcription(ListeCoup: list) -> list:
-    Convertisseur: dict = {"Pierre":0,'Feuille':1,"Ciseau":2}
-    return [Convertisseur[ListeCoup[0]],Convertisseur[ListeCoup[1]]]
-
+    Convertisseur = {"Pierre": 0, 'Feuille': 1, "Ciseau": 2}
+    return [Convertisseur[ListeCoup[0]], Convertisseur[ListeCoup[1]]]
 
 def Winner(ValeurCoup: list) -> str:
-    ValeurCoup: int = Transcription(ValeurCoup)
-    Discriminant: int = (ValeurCoup[0]-ValeurCoup[1]+3)%3
-
-    Gagnant = "Joueur1" if Discriminant==1 else "Joueur2" if Discriminant== 2 else "egalite"
-
+    ValeurCoup = Transcription(ValeurCoup)
+    Discriminant = (ValeurCoup[0] - ValeurCoup[1] + 3) % 3
+    Gagnant = "Joueur1" if Discriminant == 1 else "Joueur2" if Discriminant == 2 else "egalite"
     return Gagnant
 
+hostname = "127.0.0.1"
+port = 56789
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((hostname, port))
+s.listen(5)
+
+print("Server is listening...")
+
 while True:
-    clientsocket, address = s.accept()
-    print(f"Connection from {address} complete")
-    clientsocket.send(bytes("Welcome to the server! Choose ur moove","utf-8"))
-    MessageClient = clientsocket.recv(1024)
-    print(MessageClient.decode("utf-8"))
+    print("Waiting for Player 1...")
+    clientsocket1, address1 = s.accept()
+    print(f"Player 1 connected from {address1}")
+    clientsocket1.send(bytes("Waiting for Player 2...", "utf-8"))
 
+    print("Waiting for Player 2...")
     clientsocket2, address2 = s.accept()
-    print(f"Connection with player 2 from {address2} complete")
-    clientsocket2.send(bytes("Welcome to the server! Choose ur moove","utf-8"))
-    MessageClient2 = clientsocket2.recv(1024)
-    print(MessageClient2.decode("utf-8"))
+    print(f"Player 2 connected from {address2}")
+    clientsocket2.send(bytes("Player 2 connected. Starting the game...", "utf-8"))
+    clientsocket1.send(bytes("Player 2 connected. Starting the game...", "utf-8"))
 
-    MooveClient1 = clientsocket.recv(1024)
-    MooveJ1= MooveClient1.decode("utf-8")
-    print(MooveJ1)
-    MooveClient2 = clientsocket2.recv(1024)
-    MooveJ2 = MooveClient2.decode("utf-8")
-    print(MooveJ2)
+    # Informer les joueurs qu'ils peuvent jouer
+    clientsocket1.send(bytes("Welcome to the server! Choose your move", "utf-8"))
+    clientsocket2.send(bytes("Welcome to the server! Choose your move", "utf-8"))
 
-    Gagnant = Winner([MooveJ1,MooveJ2])
-    print(Gagnant)
+    # Entrée des coups des joueurs
+    MooveClient1 = clientsocket1.recv(1024).decode("utf-8")
+    print(f"Player 1 chose: {MooveClient1}")
+    MooveClient2 = clientsocket2.recv(1024).decode("utf-8")
+    print(f"Player 2 chose: {MooveClient2}")
 
+    # Déterminer le gagnant
+    Gagnant = Winner([MooveClient1, MooveClient2])
+    print(f"Winner: {Gagnant}")
 
+    # Envoyer le résultat aux joueurs
     if Gagnant == "Joueur1":
-        clientsocket.send(bytes("Gg u win","utf-8"))
-        clientsocket2.send(bytes("Sad u loose","utf-8"))
-
+        clientsocket1.send(bytes("Gg you win", "utf-8"))
+        clientsocket2.send(bytes("Sad you lose", "utf-8"))
     elif Gagnant == "Joueur2":
-        clientsocket.send(bytes("Sad u loose","utf-8"))
-        clientsocket2.send(bytes("Gg u win","utf-8"))
-
+        clientsocket1.send(bytes("Sad you lose", "utf-8"))
+        clientsocket2.send(bytes("Gg you win", "utf-8"))
     else:
-        clientsocket.send(bytes("No winner Draw","utf-8"))
-        clientsocket2.send(bytes("No winner Draw","utf-8"))
+        clientsocket1.send(bytes("No winner, it's a draw", "utf-8"))
+        clientsocket2.send(bytes("No winner, it's a draw", "utf-8"))
+
+    # Fermer les connexions
+    clientsocket1.close()
+    clientsocket2.close()

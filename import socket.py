@@ -1,8 +1,8 @@
 import socket
-#import librairie
+import threading
 from tkinter import *
-#le code de jaouen
-#Variable Globals
+
+# Variables Globales
 s = None
 message = ""
 msg = None
@@ -20,45 +20,77 @@ def connection():
             # texte
             ecriture = message
             # narrateur
-            Narrateur = Label(fen, text=ecriture)
-            Narrateur.grid(row=1, column=3)
-            s.send(bytes("Hey I'm here", "utf-8"))
-            bouton_connexion["state"] = "disabled"
-            bouton_pierre["state"] = "normal"
-            bouton_feuille["state"] = "normal"
-            bouton_ciseau["state"] = "normal"
-            Connected = True
+            Narrateur.config(text=ecriture)
+
+
+            if "Waiting player 2" in message:
+                threading.Thread(target=WaitingGame).start()
+            else:
+                enable_buttons()
+                Connected = True
         else:
             raise Exception("No message received from server")
     except Exception as e:
         print(f"Connection failed: {e}")
 
-def Result():
-    msg = s.recv(1024)
-    Resultat = msg.decode("utf-8")
-        # texte
-    ecriture = Resultat
+def enable_buttons():
+    bouton_connexion["state"] = "disabled"
+    bouton_pierre["state"] = "normal"
+    bouton_feuille["state"] = "normal"
+    bouton_ciseau["state"] = "normal"
 
-        # narrateur
-    Narrateur = Label(fen, text=ecriture)
-    Narrateur.grid(row=0, column=3)
+def WaitingGame():
+    global s, Connected
+    while True:
+        msg = s.recv(1024)
+        if msg:
+            message = msg.decode("utf-8")
+            if "Player 2 connected. Starting the game..." in message:
+                # Texte
+                ecriture = message
+                # Narrateur
+                Narrateur.config(text=ecriture)
+                enable_buttons()
+                Connected = True
+                break
+            else:
+                ecriture = message
+                Narrateur.config(text=ecriture)
+
+def WaitingResult():
+    Confirmation = s.recv(1024)
+    if "Can Play" in Confirmation.decode("utf-8"):
+        msg = s.recv(1024)
+        Resultat = msg.decode("utf-8")
+        Narrateur.config(text=Resultat)
+    else:
+        print("Test")
+
+def Result():
+    Confirmation = s.recv(1024)
+    if "Waiting The other Player" in Confirmation.decode("utf-8"):
+        threading.Thread(target=WaitingResult).start()
+    else:
+        msg = s.recv(1024)
+        Resultat = msg.decode("utf-8")
+        Narrateur.config(text=Resultat)
 
 def Pierre():
     if Connected:
-        s.send(bytes("Pierre", "utf-8"))
-        Result()
-
+        threading.Thread(target=send_choice, args=("Pierre",)).start()
 
 def Feuille():
     if Connected:
-        s.send(bytes("Feuille", "utf-8"))
-        Result()
-
+        threading.Thread(target=send_choice, args=("Feuille",)).start()
 
 def Ciseau():
     if Connected:
-        s.send(bytes("Ciseau", "utf-8"))
-        Result()
+        threading.Thread(target=send_choice, args=("Ciseau",)).start()
+
+def send_choice(choice):
+    s.send(bytes(choice, "utf-8"))
+    Result()
+
 def exit_fullscreen(event=None):
     """Quitter le mode plein écran."""
     fen.attributes("-fullscreen", False)
@@ -70,58 +102,46 @@ fen.title("jeu")
 fen.attributes('-fullscreen', True)
 fen.bind('<Escape>', exit_fullscreen)
 
-
-#Esthetique des boutons
+# Esthétique des boutons
 esthetique = {
     'font': ('Tahoma', 10, 'bold'),
-
-    'fg': 'black',         # Couleur du texte
-    'activebackground': '#FFFFFF',  # Couleur de fond quand le bouton est cliqué
-    'activeforeground': 'black',    # Couleur du texte quand le bouton est cliqué
-    'bd': 1,               # Bordure
-    'relief': 'solid',    # Style de bordure
-    'width': 5,          # Largeur du bouton en pixels
-    'height': 2           # Hauteur du bouton en pixels
+    'fg': 'black',
+    'activebackground': '#FFFFFF',
+    'activeforeground': 'black',
+    'bd': 1,
+    'relief': 'solid',
+    'width': 5,
+    'height': 2
 }
 
+esthetique2 = {'font': ('Verdana', 15, 'bold')}
+esthetique3 = {'font': ('Verdana', 10, 'bold')}
 
-esthetique2= {
-    'font': ('Verdana', 15 ,'bold')
-}
-
-esthetique3= {
-    'font': ('Verdana', 10 ,'bold')
-}
-#fond d'écran
-
-
-
-
-#bouton feuille
-bouton_feuille=Button(fen,text='feuille', command=Feuille, **esthetique, state='disabled')
+# Bouton feuille
+bouton_feuille = Button(fen, text='feuille', command=Feuille, **esthetique, state='disabled')
 bouton_feuille.grid(row=1, column=1, padx=10, pady=10, sticky='e')
 
-#bouton pierre
-bouton_pierre=Button(fen,text='pierre',command=Pierre, **esthetique, state='disabled')
+# Bouton pierre
+bouton_pierre = Button(fen, text='pierre', command=Pierre, **esthetique, state='disabled')
 bouton_pierre.grid(row=1, column=2, padx=10, pady=10)
 
-#bouton ciseau
-bouton_ciseau=Button(fen,text='ciseau', command=Ciseau, **esthetique, state='disabled')
+# Bouton ciseau
+bouton_ciseau = Button(fen, text='ciseau', command=Ciseau, **esthetique, state='disabled')
 bouton_ciseau.grid(row=1, column=3, padx=10, pady=10, sticky='w')
 
-#texte
-ecriture='infos du serveur:' #changer pour mettre la réponse du joueur via le serveur
+# Texte
+ecriture = 'infos du serveur:'
 
-#bouton start
-bouton_connexion=Button(fen, text='Recherche de match', command=connection)
+# Bouton start
+bouton_connexion = Button(fen, text='Recherche de match', command=connection)
 bouton_connexion.grid(row=0, column=16)
 
-#narrateur
-Narrateur=Label(fen, text=ecriture, **esthetique2)
+# Narrateur
+Narrateur = Label(fen, text=ecriture, **esthetique2)
 Narrateur.grid(row=0, column=0)
 
-#infos pour echap
-infech=Label(fen, text='appuyez sur echap pour quitter le mode plein écran', ** esthetique3)
+# Infos pour échapper
+infech = Label(fen, text='appuyez sur echap pour quitter le mode plein écran', **esthetique3)
 infech.grid(row=4, column=15)
 
 fen.grid_rowconfigure(0, weight=1)
@@ -130,7 +150,5 @@ fen.grid_rowconfigure(2, weight=1)
 fen.grid_columnconfigure(0, weight=1)
 fen.grid_columnconfigure(1, weight=1)
 fen.grid_columnconfigure(2, weight=1)
-
-
 
 fen.mainloop()
